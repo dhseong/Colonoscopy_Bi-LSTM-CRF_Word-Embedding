@@ -101,7 +101,7 @@ optimizers_list = list(optimizers.keys())
 epochnum = 10
 batchnum = 128
 lossname = 'crf'
-optsname = 'nadam'  # 'adam', 'nadam', 'rmsprop'
+optsname = 'rmsprop'  # 'adam', 'nadam', 'rmsprop'
 modelname = 'Bi-LSTM-CRF-w2v baseline 5-Fold'
 dataname = 'D1'
 epochname = '10'
@@ -169,7 +169,9 @@ plt.show()
 
 #%% Make OOV for infrequent words (over 2000 words)
 # max_words = 1700
-src_tokenizer = Tokenizer(num_words=max_words, oov_token='OOV')
+# src_tokenizer = Tokenizer(num_words=max_words, oov_token='OOV')
+
+src_tokenizer = Tokenizer()
 src_tokenizer.fit_on_texts(sentences)
 max_words = len(src_tokenizer.word_index) + 1
 
@@ -230,18 +232,6 @@ for train_index, test_index in kfold.split(X):
     y_train, y_test = y[train_index], y[test_index]
 
     fullname = modelname+'_'+lossname+'_'+optsname+'_'+dataname+'_'+w2vname+'_'+str(fold_no)  # data compare
-
-    # %% Save the X_test
-    # csvfile = open(os.path.join(save_dir, fullname+' - X_test.txt'), 'w', newline="")
-    # wtr = csv.writer(csvfile, delimiter=',', lineterminator='\n')
-    #
-    # for x in X_test:
-    #     i = []
-    #     for w in x:
-    #         if w != 0:
-    #             i.append(index_to_word[w])
-    #     wtr.writerow(i)
-    # csvfile.close()
 
     #%% One-hot encoding for y
     y_train = to_categorical(y_train, num_classes=tag_size)
@@ -310,18 +300,6 @@ for train_index, test_index in kfold.split(X):
     plot(history.history, epochnum, batchnum, save_dir, fullname)
     model.load_weights(os.path.join(weight_dir, fullname+'.hdf5'))
 
-    #%% Check part of results
-    # i = 12
-    # y_predicted = model.predict(np.array([X_test[i]]))
-    # y_predicted = np.argmax(y_predicted, axis=-1)
-    # true = np.argmax(y_test[i], -1)
-    # print('{:17}| {:16}| {}'.format('Word', 'Original', 'Predicted'))
-    # print(35 * '-')
-    # for w, t, pred in zip(X_test[i], true, y_predicted[0]):
-    #     if w != 0:
-    #         print('{:17}: {:17} {}'.format(index_to_word[w], index_to_ner[t].upper(), index_to_ner[pred].upper()))
-
-
     #%% Check all results
     y_predicted = model.predict(X_test)
     pred_tags = sequence_to_tag(y_predicted)
@@ -361,35 +339,6 @@ for train_index, test_index in kfold.split(X):
             wtr.writerow('\n')
     csvfile.close()
 
-    #%% Check the model with explicitly written inputs
-    # word_to_index = src_tokenizer.word_index
-    # new_sentence = 'On the ascending colon 0.3 cm sized is polyp was noticed'.split()
-    # new_ner_tags = 'o o b-anatomicalsite i-anatomicalsite b-size i-size o b-shape b-lesion o o'.split()
-    #
-    # X_train_test = src_tokenizer.texts_to_sequences(new_sentence)
-    # y_train_test = tar_tokenizer.texts_to_sequences(new_ner_tags)
-    # print(X_train_test)
-    # print(y_train_test)
-    #
-    # new_X = []
-    # for w in new_sentence:
-    #     try:
-    #         new_X.append(word_to_index.get(w, 1))
-    #     except KeyError:
-    #         new_X.append(word_to_index['OOV'])
-    # print(new_X)
-    #
-    # pad_new = pad_sequences([new_X], padding='post', value=0, maxlen=max_length)
-    #
-    # p = model.predict(np.array([pad_new[0]]))
-    # p = np.argmax(p, axis=-1)
-    # print('{:17}|| {}'.format('Word', 'Predicted'))
-    # print(30 * '-')
-    # for w, pred in zip(new_sentence, p[0]):
-    #     if w != 0:
-    #         print('{:17}: {}'.format(w, index_to_ner[pred].upper()))
-
-    # Increase fold number
     fold_no = fold_no + 1
 
 
