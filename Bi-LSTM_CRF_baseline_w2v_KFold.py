@@ -20,24 +20,22 @@ from seqeval.metrics import precision_score, recall_score, f1_score, classificat
 from keras_contrib.layers import CRF
 from gensim.models import KeyedVectors
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+gpus = tf.config.experimental.list_physical_devices('GPU')
 
-# gpus = tf.config.experimental.list_physical_devices('GPU')
-#
-# if gpus:
-#     try:
-#         # Restrict TensorFlow to only use the fourth GPU
-#         tf.config.experimental.set_visible_devices(gpus[0], 'GPU')
-#         # Currently, memory growth needs to be the same across GPUs
-#         for gpu in gpus:
-#             tf.config.experimental.set_memory_growth(gpu, True)
-#             logical_gpus = tf.config.experimental.list_logical_devices('GPU')
-#
-#             print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
-#
-#     except RuntimeError as e:
-#         # Memory growth must be set before GPUs have been initialized
-#         print(e)
+if gpus:
+    try:
+        # Restrict TensorFlow to only use the fourth GPU
+        tf.config.experimental.set_visible_devices(gpus[0], 'GPU')
+        # Currently, memory growth needs to be the same across GPUs
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+            logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+
+            print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+
+    except RuntimeError as e:
+        # Memory growth must be set before GPUs have been initialized
+        print(e)
 
 
 def makedirs(path):
@@ -104,16 +102,12 @@ epochnum = 10
 batchnum = 128
 lossname = 'crf'
 optsname = 'nadam'  # 'adam', 'nadam', 'rmsprop'
-modelname = '221102 Bi-LSTM-CRF-w2v baseline english P6 D1 5-Fold'
-# modelname = '201112 Bi-LSTM-CRF-w2v baseline english P29 D1 5-Fold'
-# modelname = 'Bi-LSTM-CRF-w2v baseline english data'  # data compare
-# modelname = 'Bi-LSTM-CRF-w2v baseline english epoch'  # epoch
+modelname = 'Bi-LSTM-CRF-w2v baseline 5-Fold'
 dataname = 'D1'
 epochname = '10'
 loss = losses[lossname]
 optimizer = optimizers[optsname]
-# w2vname = 'w2v_bs4148_bs4141_128_30_3_4_0' # w2v compare
-w2vname = 'w2v_bs4148_bs4141_128_5_3_4_0'  # data compare
+w2vname = 'w2v_128_5_3_4_0'
 num_folds = 5
 
 #%% Load Data & Get Sentence+Tag
@@ -121,7 +115,7 @@ root_dir = os.getcwd()
 data_dir = os.path.join(root_dir, 'data')
 save_dir = os.path.join(root_dir, 'results', modelname)
 weight_dir = os.path.join(root_dir, 'weights', modelname)
-annotation_dir = data_dir + '\\D1.txt'
+annotation_dir = data_dir + '\\data.txt'
 w2v_dir = os.path.join(root_dir, 'word2vec')
 w2v_file = w2v_dir + '\\' + w2vname + '.bin'
 
@@ -175,8 +169,7 @@ plt.show()
 
 #%% Make OOV for infrequent words (over 2000 words)
 # max_words = 1700
-# src_tokenizer = Tokenizer(num_words=max_words, oov_token='OOV')
-src_tokenizer = Tokenizer()
+src_tokenizer = Tokenizer(num_words=max_words, oov_token='OOV')
 src_tokenizer.fit_on_texts(sentences)
 max_words = len(src_tokenizer.word_index) + 1
 
